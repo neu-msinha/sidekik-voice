@@ -20,7 +20,7 @@
     "agents:webhook": "tsx --env-file-if-exists=.env scripts/agents.ts webhook"
   },
   "dependencies": {
-    "@sidekik/contracts": "github:sidekik-live/sidekik-platform#v0.3.1",
+    "@sidekik/contracts": "github:sidekik-live/sidekik-platform#v0.3.2",
     "@supabase/supabase-js": "^2",
     "fastify": "^5",
     "fastify-type-provider-zod": "^7.0.0",

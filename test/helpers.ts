@@ -95,6 +95,7 @@ export function buildTestApp(overrides: Partial<AppDeps> = {}) {
     store: seededStore(),
     bus: fakeBus(),
     el: fakeEl(),
+    gateway: fakeGateway(),
     healthChecks: {},
     logger: false,
     ...overrides,
@@ -137,4 +138,18 @@ export function fakeEl(overrides: Partial<ElevenLabsClient> = {}): ElevenLabsCli
     createWebhook: unexpected('createWebhook'),
     ...overrides,
   };
+}
+
+/** Redacts by upper-casing; `fail` makes the next calls throw (Presidio down). */
+export function fakeGateway() {
+  const fake = {
+    fail: undefined as Error | undefined,
+    calls: [] as { text: string; lang?: string | undefined }[],
+    async redact(text: string, lang?: string) {
+      fake.calls.push({ text, lang });
+      if (fake.fail) throw fake.fail;
+      return text.replace(/Sabine/g, '<PERSON>');
+    },
+  };
+  return fake;
 }

@@ -8,12 +8,14 @@ import {
 import { STREAMS, type Bus } from './contracts/index.js';
 import type { ElevenLabsClient } from './elevenlabs.js';
 import type { Env } from './env.js';
+import type { GatewayClient } from './gateway.js';
 import { HttpError } from './errors.js';
 import { healthRoutes, type HealthCheck } from './routes/health.js';
 import { sessionCache } from './sessions.js';
 import type { Store } from './store/types.js';
 import { tokenRoutes } from './token.js';
 import { transcriptHandler } from './transcripts.js';
+import { webhookRoutes } from './webhook.js';
 import { VERSION } from './version.js';
 
 export type AppDeps = {
@@ -21,6 +23,7 @@ export type AppDeps = {
   store: Store;
   bus: Bus;
   el: ElevenLabsClient;
+  gateway: GatewayClient;
   healthChecks: Record<string, HealthCheck>;
   /** The service's shared pino logger (server, dev:mock); tests pass `logger` options instead. */
   loggerInstance?: FastifyBaseLogger;
@@ -83,6 +86,13 @@ export async function buildApp(deps: AppDeps) {
   });
 
   await app.register(healthRoutes, { version: VERSION, checks: deps.healthChecks });
+  await app.register(webhookRoutes, {
+    store: deps.store,
+    bus: deps.bus,
+    gateway: deps.gateway,
+    sessions,
+    secret: env.EL_WEBHOOK_SECRET,
+  });
   await app.register(tokenRoutes, { el: deps.el, ids: env, sessions, internalToken: env.SK_INTERNAL_TOKEN });
 
   return app;

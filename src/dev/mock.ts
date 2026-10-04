@@ -3,6 +3,7 @@
 import { buildApp } from '../app.js';
 import { createBus } from '../contracts/index.js';
 import type { ElevenLabsClient } from '../elevenlabs.js';
+import type { GatewayClient } from '../gateway.js';
 import { loadEnv } from '../env.js';
 import { createServiceLogger } from '../logger.js';
 import { redisHealth } from '../redis-health.js';
@@ -86,7 +87,14 @@ const el: ElevenLabsClient = {
   },
 };
 
-const app = await buildApp({ env, store, bus, el, healthChecks: { redis: redis.check }, loggerInstance: log });
+// Gateway stand-in: "redacts" by masking digits, so the flow is visible without Presidio.
+const gateway: GatewayClient = {
+  async redact(text) {
+    return text.replace(/\d/g, '#');
+  },
+};
+
+const app = await buildApp({ env, store, bus, el, gateway, healthChecks: { redis: redis.check }, loggerInstance: log });
 app.addHook('onClose', () => bus.close());
 app.addHook('onClose', redis.close);
 

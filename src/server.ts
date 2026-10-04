@@ -2,6 +2,7 @@ import { buildApp } from './app.js';
 import { createBus } from './contracts/index.js';
 import { httpElevenLabsClient } from './elevenlabs.js';
 import { loadEnv } from './env.js';
+import { httpGatewayClient } from './gateway.js';
 import { createServiceLogger } from './logger.js';
 import { redisHealth } from './redis-health.js';
 import { supabaseStore } from './store/supabase.js';
@@ -18,6 +19,7 @@ const app = await buildApp({
   store: supabaseStore(supabase),
   bus,
   el: httpElevenLabsClient({ apiKey: env.ELEVENLABS_API_KEY }),
+  gateway: httpGatewayClient(env.GATEWAY_INTERNAL_URL, env.SK_INTERNAL_TOKEN),
   healthChecks: {
     supabase: supabaseHealth(supabase),
     redis: redis.check,
