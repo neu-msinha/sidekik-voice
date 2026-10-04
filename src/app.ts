@@ -11,6 +11,7 @@ import type { Env } from './env.js';
 import type { GatewayClient } from './gateway.js';
 import { HttpError } from './errors.js';
 import { healthRoutes, type HealthCheck } from './routes/health.js';
+import { kbSyncHandler } from './kbsync.js';
 import { sessionCache } from './sessions.js';
 import type { Store } from './store/types.js';
 import { tokenRoutes } from './token.js';
@@ -79,7 +80,10 @@ export async function buildApp(deps: AppDeps) {
   const stops: (() => void)[] = [];
   app.addHook('onReady', async () => {
     const log = app.log.child({ component: 'bus' });
-    stops.push(deps.bus.consume(STREAMS.turns, transcriptHandler({ store: deps.store, sessions, log })));
+    stops.push(
+      deps.bus.consume(STREAMS.turns, transcriptHandler({ store: deps.store, sessions, log })),
+      deps.bus.consume(STREAMS.workmapPublished, kbSyncHandler({ store: deps.store, el: deps.el, tutorAgentId: env.EL_TUTOR_AGENT_ID, log })),
+    );
   });
   app.addHook('onClose', async () => {
     for (const stop of stops.splice(0)) stop();

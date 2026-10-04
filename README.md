@@ -22,7 +22,20 @@ pnpm typecheck && pnpm test
 | `POST /elevenlabs/post-call` | ElevenLabs signature | The post-call webhook (`hooks.sidekik.live`). Checks `elevenlabs-signature` (`t=…,v0=…`, HMAC-SHA256 over `{t}.{body}` with `EL_WEBHOOK_SECRET`, 30 minutes old at most); `401` otherwise. For `post_call_transcription` (other types answer `200 ignored`), the session comes from the `session_id` dynamic variable, and the turns are reconciled (below). |
 | `GET /healthz` | none | `{ok, version, deps}` |
 
-Bus: consumes `sk:transcript.turns` → `transcript_turns` (`source = "live"`).
+Bus:
+- consumes `sk:transcript.turns` → `transcript_turns` (`source = "live"`);
+- consumes `sk:workmap.published` → the Tutor agent's knowledge base and Procedures (below);
+- publishes `sk:usage` (one record per conversation, from the post-call webhook).
+
+### Work Map sync
+
+On `sk:workmap.published`, voice loads `workmaps/org/{org}/{workmap_id}/v{n}/workmap.json` and `AGENT_RULES.md` from Storage (mapper writes them before it publishes), then:
+
+1. creates the knowledge-base document `workmap-{id}-v{n}.md` from `AGENT_RULES.md` (or a rendering of `workmap.json` if that file is missing) and attaches it to the Tutor with RAG on, in place of the workflow's earlier versions, whose documents are deleted;
+2. creates one free-form Procedure per step (decision, the expert's reason quoted, its guardrails, when to ask for a prediction) and one structured **Intervention** Procedure, deletes the earlier versions' Procedures, and publishes every Procedure left on the agent's branch;
+3. records the ids in `agent_configs` (`procedure_ids`: `{step_id: id, "intervention": id}`).
+
+Each version syncs once. The row is written as soon as the document exists, so a retried event reuses the document. If the Procedures fail, the tutor still has the KB document (the cut order allows that) and the failure is logged.
 
 ### Post-call reconciliation
 

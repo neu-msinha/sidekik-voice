@@ -1,7 +1,8 @@
 import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
-import type { OffRecordSpan, SessionRow, Store, TranscriptTurnRow } from './types.js';
+import type { AgentConfigRow, OffRecordSpan, SessionRow, Store, TranscriptTurnRow } from './types.js';
 
 const SESSION_COLUMNS = 'id, org_id, workflow_id, kind, mode, language, started_at, ended_at';
+const CONFIG_COLUMNS = 'org_id, workmap_id, version, el_agent_id, kb_doc_id, procedure_ids';
 const TURN_COLUMNS = 'org_id, session_id, turn_id, role, text_redacted, lang, t_ms, source, off_record';
 
 export function unwrap<T>({ data, error }: { data: T; error: PostgrestError | null }, what: string): T {
@@ -57,6 +58,58 @@ export function supabaseStore(db: SupabaseClient): Store {
         'list off-record spans',
       );
       return spans ?? [];
+    },
+
+    async readWorkmapFile(path) {
+      const { data, error } = await db.storage.from('workmaps').download(path);
+      if (error) {
+        // A missing object comes back as an error; any other failure is real.
+        if (/not.?found|404/i.test(`${error.message} ${(error as { status?: number }).status ?? ''}`)) return null;
+        throw new Error(`read workmaps/${path}: ${error.message}`);
+      }
+      return data.text();
+    },
+
+    async getAgentConfig(workmapId, version) {
+      return unwrap(
+        await db
+          .from('agent_configs')
+          .select(CONFIG_COLUMNS)
+          .eq('workmap_id', workmapId)
+          .eq('version', version)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle<AgentConfigRow>(),
+        'get agent config',
+      );
+    },
+
+    async insertAgentConfig(row) {
+      unwrap(await db.from('agent_configs').insert(row), 'insert agent config');
+    },
+
+    async updateAgentConfig(workmapId, version, patch) {
+      unwrap(
+        await db.from('agent_configs').update(patch).eq('workmap_id', workmapId).eq('version', version),
+        'update agent config',
+      );
+    },
+
+    async listWorkflowAgentConfigs(workflowId) {
+      const maps = unwrap(await db.from('work_maps').select('id').eq('workflow_id', workflowId), 'list work maps') ?? [];
+      if (maps.length === 0) return [];
+      const rows = unwrap(
+        await db
+          .from('agent_configs')
+          .select(CONFIG_COLUMNS)
+          .in(
+            'workmap_id',
+            maps.map((m) => m.id as string),
+          )
+          .returns<AgentConfigRow[]>(),
+        'list agent configs',
+      );
+      return rows ?? [];
     },
   };
 }
