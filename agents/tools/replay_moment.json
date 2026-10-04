@@ -1,0 +1,13 @@
+{
+  "type": "client",
+  "name": "replay_moment",
+  "description": "Replay the expert's recorded moment for a step (opens the clip overlay with the expert's quote).",
+  "expects_response": false,
+  "parameters": {
+    "type": "object",
+    "required": ["step_id"],
+    "properties": {
+      "step_id": { "type": "string", "description": "The step's UUID, from the INTERVENE message or get_step." }
+    }
+  }
+}

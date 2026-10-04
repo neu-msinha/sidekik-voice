@@ -1,0 +1,17 @@
+{
+  "type": "client",
+  "name": "highlight_field",
+  "description": "Highlight a field of the invoice form the learner is filling in.",
+  "expects_response": false,
+  "parameters": {
+    "type": "object",
+    "required": ["field"],
+    "properties": {
+      "field": {
+        "type": "string",
+        "description": "The invoice field to highlight.",
+        "enum": ["supplier", "supplier_known", "net_amount", "currency", "invoice_date", "company_code", "category", "cost_center", "asset_number", "approvals_count"]
+      }
+    }
+  }
+}

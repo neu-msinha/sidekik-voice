@@ -1,0 +1,13 @@
+{
+  "type": "client",
+  "name": "mark_off_record",
+  "description": "Pause or resume recording when the expert asks to go off (or back on) the record.",
+  "expects_response": false,
+  "parameters": {
+    "type": "object",
+    "required": ["on"],
+    "properties": {
+      "on": { "type": "boolean", "description": "true to go off the record, false to resume." }
+    }
+  }
+}

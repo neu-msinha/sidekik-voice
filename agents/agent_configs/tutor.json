@@ -1,0 +1,30 @@
+{
+  "name": "Sidekik Tutor",
+  "tags": ["sidekik", "tutor"],
+  "conversation_config": {
+    "agent": {
+      "first_message": "",
+      "language": "en",
+      "prompt": {
+        "llm": "claude-haiku-4-5",
+        "temperature": 0.3,
+        "built_in_tools": {
+          "skip_turn": { "type": "system", "name": "skip_turn", "description": "Stay silent this turn: the user is narrating, reading, typing or thinking aloud.", "params": { "system_tool_type": "skip_turn" } },
+          "end_call": { "type": "system", "name": "end_call", "description": "End the call when the user says goodbye.", "params": { "system_tool_type": "end_call" } }
+        },
+        "rag": { "enabled": true }
+      }
+    },
+    "asr": { "provider": "scribe_realtime" },
+    "tts": { "model_id": "eleven_v3_conversational", "expressive_mode": true },
+    "turn": { "turn_eagerness": "normal" }
+  },
+  "platform_settings": {
+    "auth": { "enable_auth": true },
+    "overrides": {
+      "conversation_config_override": {
+        "agent": { "first_message": true, "language": true, "prompt": { "prompt": true } }
+      }
+    }
+  }
+}

@@ -24,6 +24,7 @@ const env = loadEnv({
   ELEVENLABS_API_KEY: 'unused-in-mock',
   EL_INTERVIEWER_AGENT_ID: 'agent_mock_interviewer',
   EL_TUTOR_AGENT_ID: 'agent_mock_tutor',
+  EL_DEBRIEF_AGENT_ID: 'agent_mock_debrief',
   EL_WEBHOOK_SECRET: DEV_SECRET,
   GATEWAY_INTERNAL_URL: 'http://localhost:8080',
   LOG_LEVEL: 'info',

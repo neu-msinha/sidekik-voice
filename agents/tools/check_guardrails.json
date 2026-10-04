@@ -1,0 +1,18 @@
+{
+  "type": "webhook",
+  "name": "check_guardrails",
+  "description": "Check the invoice against the expert's guardrails. Returns every guardrail that fires, with the expert's quote.",
+  "api_schema": {
+    "url": "{{TOOLS_BASE_URL}}/v1/tools/check_guardrails",
+    "method": "POST",
+    "request_headers": { "X-Sidekik-Tool-Secret": "{{SK_TOOL_SECRET}}" },
+    "request_body_schema": {
+      "type": "object",
+      "required": ["session_id"],
+      "properties": {
+        "session_id": { "type": "string", "description": "The current session.", "dynamic_variable": "session_id" },
+        "state": { "type": "object", "description": "The invoice as it is on screen now.", "properties": { "supplier": { "type": "string", "description": "Supplier name" }, "supplier_known": { "type": "boolean", "description": "Supplier is in the master data" }, "net_amount": { "type": "number", "description": "Net amount" }, "currency": { "type": "string", "description": "ISO currency" }, "invoice_month": { "type": "number", "description": "Month 1-12" }, "company_code": { "type": "string", "description": "e.g. DE01, CZ01" }, "category": { "type": "string", "description": "e.g. equipment, services" }, "cost_center": { "type": "string", "description": "e.g. 4711, 0400" }, "asset_number": { "type": "string", "description": "Asset number, if any" }, "approvals_count": { "type": "number", "description": "Approvals so far" } } }
+      }
+    }
+  }
+}

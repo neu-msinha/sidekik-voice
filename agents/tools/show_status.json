@@ -1,0 +1,13 @@
+{
+  "type": "client",
+  "name": "show_status",
+  "description": "Show a short status line on the user's screen (never spoken).",
+  "expects_response": false,
+  "parameters": {
+    "type": "object",
+    "required": ["text"],
+    "properties": {
+      "text": { "type": "string", "description": "At most 60 characters." }
+    }
+  }
+}

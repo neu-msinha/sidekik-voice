@@ -1,0 +1,18 @@
+{
+  "type": "webhook",
+  "name": "get_step",
+  "description": "Get the current step (or a given step): its decision and the expert's reason in their own words.",
+  "api_schema": {
+    "url": "{{TOOLS_BASE_URL}}/v1/tools/get_step",
+    "method": "POST",
+    "request_headers": { "X-Sidekik-Tool-Secret": "{{SK_TOOL_SECRET}}" },
+    "request_body_schema": {
+      "type": "object",
+      "required": ["session_id"],
+      "properties": {
+        "session_id": { "type": "string", "description": "The current session.", "dynamic_variable": "session_id" },
+        "step_id": { "type": "string", "description": "A step UUID; leave out for the learner's current step." }
+      }
+    }
+  }
+}

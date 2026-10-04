@@ -1,0 +1,18 @@
+{
+  "type": "webhook",
+  "name": "get_expert_moment",
+  "description": "Get the expert's recorded moment for a step: their quote, a label and the clip, if one was cut.",
+  "api_schema": {
+    "url": "{{TOOLS_BASE_URL}}/v1/tools/get_expert_moment",
+    "method": "POST",
+    "request_headers": { "X-Sidekik-Tool-Secret": "{{SK_TOOL_SECRET}}" },
+    "request_body_schema": {
+      "type": "object",
+      "required": ["step_id", "session_id"],
+      "properties": {
+        "session_id": { "type": "string", "description": "The current session.", "dynamic_variable": "session_id" },
+        "step_id": { "type": "string", "description": "The step's UUID." }
+      }
+    }
+  }
+}

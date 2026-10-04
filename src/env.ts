@@ -14,6 +14,9 @@ export const envSchema = BaseServiceEnvSchema.extend({
   ELEVENLABS_API_KEY: z.string().min(1),
   EL_INTERVIEWER_AGENT_ID: z.string().min(1),
   EL_TUTOR_AGENT_ID: z.string().min(1),
+  // The Interviewer's debrief configuration (prompt + Normal eagerness): ElevenLabs can't bind a prompt
+  // override to a WebRTC token, so the debrief phase gets its own agent.
+  EL_DEBRIEF_AGENT_ID: z.string().min(1),
   // The post-call webhook's HMAC secret, from the ElevenLabs webhook settings.
   EL_WEBHOOK_SECRET: z.string().min(1),
 

@@ -1,0 +1,26 @@
+{
+  "$comment": "Agents as code (DESIGN §3). `pnpm agents:push` reads each entry, injects the prompt file and tools into the config (an ElevenLabs PATCH /v1/convai/agents/{id} body) and pushes it to the agent whose id is in `id_env`.",
+  "agents": [
+    {
+      "key": "interviewer",
+      "config": "agent_configs/interviewer.json",
+      "prompt": "prompts/interviewer.capture.md",
+      "tools": ["mark_off_record", "show_status", "recall_context"],
+      "id_env": "EL_INTERVIEWER_AGENT_ID"
+    },
+    {
+      "key": "interviewer-debrief",
+      "config": "agent_configs/interviewer-debrief.json",
+      "prompt": "prompts/interviewer.debrief.md",
+      "tools": ["mark_off_record", "show_status", "recall_context"],
+      "id_env": "EL_DEBRIEF_AGENT_ID"
+    },
+    {
+      "key": "tutor",
+      "config": "agent_configs/tutor.json",
+      "prompt": "prompts/tutor.md",
+      "tools": ["replay_moment", "highlight_field", "show_status", "check_guardrails", "get_step", "get_expert_moment"],
+      "id_env": "EL_TUTOR_AGENT_ID"
+    }
+  ]
+}

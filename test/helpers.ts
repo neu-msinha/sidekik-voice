@@ -47,6 +47,7 @@ export const RAW_ENV: Record<string, string> = {
   ELEVENLABS_API_KEY: 'el-key',
   EL_INTERVIEWER_AGENT_ID: 'agent_interviewer',
   EL_TUTOR_AGENT_ID: 'agent_tutor',
+  EL_DEBRIEF_AGENT_ID: 'agent_debrief',
   EL_WEBHOOK_SECRET: SECRETS.webhook,
   GATEWAY_INTERNAL_URL: 'http://localhost:8080',
 };
