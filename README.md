@@ -14,6 +14,15 @@ pnpm typecheck && pnpm test
 
 `GET /healthz` returns `{ok, version, deps}` (Redis, Supabase).
 
+## Endpoints
+
+| Route | Auth | What |
+|---|---|---|
+| `POST /internal/token` | `X-Internal-Token` | `{agent, phase, session_id, dynamic_variables, language}` → `{conversation_token, agent_id}`. A WebRTC token from `GET /v1/convai/conversation/token` for the phase's agent: the Tutor, the Interviewer's debrief agent for `phase = debrief`, otherwise the Interviewer. The page passes `dynamic_variables` (and any language override) to `startSession`; ElevenLabs can't bind them to the token. `502`/`504` when ElevenLabs fails or takes over 450 ms. |
+| `GET /healthz` | none | `{ok, version, deps}` |
+
+Bus: consumes `sk:transcript.turns` → `transcript_turns` (`source = "live"`).
+
 ## Agents as code
 
 `agents/` holds the ElevenLabs agents (DESIGN §3):

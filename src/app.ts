@@ -6,11 +6,13 @@ import {
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
 import { STREAMS, type Bus } from './contracts/index.js';
+import type { ElevenLabsClient } from './elevenlabs.js';
 import type { Env } from './env.js';
 import { HttpError } from './errors.js';
 import { healthRoutes, type HealthCheck } from './routes/health.js';
 import { sessionCache } from './sessions.js';
 import type { Store } from './store/types.js';
+import { tokenRoutes } from './token.js';
 import { transcriptHandler } from './transcripts.js';
 import { VERSION } from './version.js';
 
@@ -18,6 +20,7 @@ export type AppDeps = {
   env: Env;
   store: Store;
   bus: Bus;
+  el: ElevenLabsClient;
   healthChecks: Record<string, HealthCheck>;
   /** The service's shared pino logger (server, dev:mock); tests pass `logger` options instead. */
   loggerInstance?: FastifyBaseLogger;
@@ -80,6 +83,7 @@ export async function buildApp(deps: AppDeps) {
   });
 
   await app.register(healthRoutes, { version: VERSION, checks: deps.healthChecks });
+  await app.register(tokenRoutes, { el: deps.el, ids: env, sessions, internalToken: env.SK_INTERNAL_TOKEN });
 
   return app;
 }

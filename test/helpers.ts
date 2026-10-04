@@ -1,5 +1,6 @@
 import { buildApp, type AppDeps } from '../src/app.js';
 import { streamEnvelopeSchema, type Bus, type Envelope, type StreamKey } from '../src/contracts/index.js';
+import type { ElevenLabsClient } from '../src/elevenlabs.js';
 import { loadEnv, type Env } from '../src/env.js';
 import { memoryStore } from '../src/store/memory.js';
 import type { SessionRow } from '../src/store/types.js';
@@ -93,6 +94,7 @@ export function buildTestApp(overrides: Partial<AppDeps> = {}) {
     env: testEnv(),
     store: seededStore(),
     bus: fakeBus(),
+    el: fakeEl(),
     healthChecks: {},
     logger: false,
     ...overrides,
@@ -113,6 +115,26 @@ export function envelope<T>(type: string, data: T, overrides: Partial<Envelope<T
     ts: STARTED_AT,
     producer: 'gateway',
     data,
+    ...overrides,
+  };
+}
+
+/** An ElevenLabs client that fails every call; tests pass the methods they need. */
+export function fakeEl(overrides: Partial<ElevenLabsClient> = {}): ElevenLabsClient {
+  const unexpected = (name: string) => async () => {
+    throw new Error(`unexpected ElevenLabs call: ${name}`);
+  };
+  return {
+    conversationToken: unexpected('conversationToken'),
+    getAgent: unexpected('getAgent'),
+    createAgent: unexpected('createAgent'),
+    updateAgent: unexpected('updateAgent'),
+    createKnowledgeBaseText: unexpected('createKnowledgeBaseText'),
+    deleteKnowledgeBaseDoc: unexpected('deleteKnowledgeBaseDoc'),
+    createProcedure: unexpected('createProcedure'),
+    listProcedures: unexpected('listProcedures'),
+    deleteProcedure: unexpected('deleteProcedure'),
+    createWebhook: unexpected('createWebhook'),
     ...overrides,
   };
 }

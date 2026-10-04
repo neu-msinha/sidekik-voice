@@ -2,6 +2,7 @@
 // Redis comes from sidekik-platform's docker-compose.
 import { buildApp } from '../app.js';
 import { createBus } from '../contracts/index.js';
+import type { ElevenLabsClient } from '../elevenlabs.js';
 import { loadEnv } from '../env.js';
 import { createServiceLogger } from '../logger.js';
 import { redisHealth } from '../redis-health.js';
@@ -49,7 +50,43 @@ const store = memoryStore({
   ],
 });
 
-const app = await buildApp({ env, store, bus, healthChecks: { redis: redis.check }, loggerInstance: log });
+// ElevenLabs stand-in: logs what voice would send and answers with made-up ids.
+let n = 0;
+const el: ElevenLabsClient = {
+  async conversationToken(agentId) {
+    return { token: `mock-conversation-token-${agentId}-${++n}` };
+  },
+  async getAgent(agentId) {
+    return { agent_id: agentId, branch_id: 'agtbranch_mock' };
+  },
+  async createAgent(body) {
+    log.info({ name: body.name }, 'mock elevenlabs: agent created');
+    return { agent_id: `agent_mock_${++n}` };
+  },
+  async updateAgent(agentId, body) {
+    log.info({ agent_id: agentId, keys: Object.keys(body) }, 'mock elevenlabs: agent updated');
+  },
+  async createKnowledgeBaseText(name, text) {
+    log.info({ name, chars: text.length }, 'mock elevenlabs: knowledge base document created');
+    return { id: `kb_mock_${++n}`, name };
+  },
+  async deleteKnowledgeBaseDoc(id) {
+    log.info({ kb_doc_id: id }, 'mock elevenlabs: knowledge base document deleted');
+  },
+  async createProcedure(agentId, _branchId, body) {
+    log.info({ agent_id: agentId, name: body.name, type: body.type }, 'mock elevenlabs: procedure created');
+    return { procedure_id: `proc_mock_${++n}` };
+  },
+  async listProcedures() {
+    return [];
+  },
+  async deleteProcedure() {},
+  async createWebhook(name) {
+    return { webhook_id: `wh_mock_${name}`, webhook_secret: DEV_SECRET };
+  },
+};
+
+const app = await buildApp({ env, store, bus, el, healthChecks: { redis: redis.check }, loggerInstance: log });
 app.addHook('onClose', () => bus.close());
 app.addHook('onClose', redis.close);
 
@@ -61,4 +98,11 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
 }
 
 await app.listen({ host: '::', port: env.PORT });
-app.log.info({ session_id: MOCK.session, internal_token: env.SK_INTERNAL_TOKEN }, 'mock voice ready');
+app.log.info(
+  {
+    session_id: MOCK.session,
+    internal_token: env.SK_INTERNAL_TOKEN,
+    try: `curl -X POST localhost:${env.PORT}/internal/token -H 'x-internal-token: ${env.SK_INTERNAL_TOKEN}' -H 'content-type: application/json' -d '{"agent":"interviewer","phase":"capture","session_id":"${MOCK.session}","dynamic_variables":{},"language":"de"}'`,
+  },
+  'mock voice ready',
+);
