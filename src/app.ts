@@ -5,11 +5,13 @@ import {
   validatorCompiler,
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
-import type { Bus } from './contracts/index.js';
+import { STREAMS, type Bus } from './contracts/index.js';
 import type { Env } from './env.js';
 import { HttpError } from './errors.js';
 import { healthRoutes, type HealthCheck } from './routes/health.js';
+import { sessionCache } from './sessions.js';
 import type { Store } from './store/types.js';
+import { transcriptHandler } from './transcripts.js';
 import { VERSION } from './version.js';
 
 export type AppDeps = {
@@ -64,6 +66,18 @@ export async function buildApp(deps: AppDeps) {
   app.setNotFoundHandler((request, reply) =>
     reply.code(404).send({ error: 'not_found', message: `Route ${request.method} ${request.url} not found` }),
   );
+
+  const sessions = sessionCache(deps.store);
+
+  // Bus consumers start once the app is ready and stop when it closes.
+  const stops: (() => void)[] = [];
+  app.addHook('onReady', async () => {
+    const log = app.log.child({ component: 'bus' });
+    stops.push(deps.bus.consume(STREAMS.turns, transcriptHandler({ store: deps.store, sessions, log })));
+  });
+  app.addHook('onClose', async () => {
+    for (const stop of stops.splice(0)) stop();
+  });
 
   await app.register(healthRoutes, { version: VERSION, checks: deps.healthChecks });
 

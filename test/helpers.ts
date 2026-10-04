@@ -97,3 +97,21 @@ export function buildTestApp(overrides: Partial<AppDeps> = {}) {
     ...overrides,
   });
 }
+
+let seq = 0;
+
+/** A bus envelope for `session` at `t_ms`. */
+export function envelope<T>(type: string, data: T, overrides: Partial<Envelope<T>> = {}): Envelope<T> {
+  return {
+    id: `01JTESTEVENT${String(++seq).padStart(14, '0')}`,
+    type,
+    v: 1,
+    org_id: IDS.org,
+    session_id: IDS.session,
+    t_ms: 0,
+    ts: STARTED_AT,
+    producer: 'gateway',
+    data,
+    ...overrides,
+  };
+}
