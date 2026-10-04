@@ -6,3 +6,7 @@ coverage
 .git
 docs
 test
+spike
+agents
+scripts
+NOTES.md

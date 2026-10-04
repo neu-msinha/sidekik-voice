@@ -17,7 +17,8 @@
     "test:watch": "vitest",
     "dev:mock": "tsx watch src/dev/mock.ts",
     "agents:push": "tsx --env-file-if-exists=.env scripts/agents.ts push",
-    "agents:webhook": "tsx --env-file-if-exists=.env scripts/agents.ts webhook"
+    "agents:webhook": "tsx --env-file-if-exists=.env scripts/agents.ts webhook",
+    "spike": "tsx --env-file-if-exists=.env scripts/spike.ts"
   },
   "dependencies": {
     "@sidekik/contracts": "github:sidekik-live/sidekik-platform#v0.3.2",

@@ -66,3 +66,34 @@ pnpm agents:webhook https://hooks.sidekik.live   # workspace post-call webhook â
 ```
 
 First setup: `pnpm agents:push` (creates the agents; put the printed ids in `.env` and Railway), `pnpm agents:webhook https://hooks.sidekik.live`, then `pnpm agents:push` again to attach the webhook. Pushing keeps the knowledge base the Work Map sync attached to the Tutor. Pick each agent's voice in the ElevenLabs dashboard; the configs don't pin a `voice_id`.
+
+## Hour-1 spike
+
+`pnpm spike` serves a test page on `http://localhost:8099` that talks to the real agents. The questions, protocol and results are in `NOTES.md`.
+
+## Deploy
+
+Railway service `voice` from this repo's `main`, built with the `Dockerfile` (`node:22-slim`; runs as `node`; `HEALTHCHECK` on `/healthz`). It listens on `::` and `PORT`. Public host: `hooks.sidekik.live` (Cloudflare, proxied) for the ElevenLabs post-call webhook. The gateway reaches `/internal/token` over the private network (`VOICE_URL=http://voice.railway.internal:8085`).
+
+| Variable | Production value |
+|---|---|
+| `PORT` | `8085` |
+| `REDIS_URL` | Railway Redis (shared) |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | the team's Supabase project |
+| `SK_INTERNAL_TOKEN` | shared variable |
+| `SK_TOOL_SECRET` | shared with gateway and tutor (sent by the agents' webhook tools) |
+| `LOG_LEVEL` | `info` |
+| `ELEVENLABS_API_KEY` | ElevenLabs workspace key (Agents read/write, knowledge base, webhooks) |
+| `EL_INTERVIEWER_AGENT_ID`, `EL_DEBRIEF_AGENT_ID`, `EL_TUTOR_AGENT_ID` | printed by `pnpm agents:push` |
+| `EL_WEBHOOK_SECRET` | printed by `pnpm agents:webhook https://hooks.sidekik.live` |
+| `GATEWAY_INTERNAL_URL` | `http://gateway.railway.internal:8080` |
+| `NPM_GITHUB_TOKEN` (build only) | read-only token if sidekik-platform is private |
+
+`EL_POST_CALL_WEBHOOK_ID` and `TOOLS_BASE_URL` are only read by `pnpm agents:push`, run from a laptop.
+
+Order for a fresh environment:
+1. Deploy voice.
+2. `pnpm agents:push` and set the three agent ids.
+3. `pnpm agents:webhook https://hooks.sidekik.live` and set `EL_WEBHOOK_SECRET`.
+4. `pnpm agents:push` again with `EL_POST_CALL_WEBHOOK_ID` to attach the webhook.
+5. Redeploy voice.

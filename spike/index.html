@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sidekik voice spike</title>
+  <style>
+    body { font: 14px/1.4 system-ui, sans-serif; margin: 16px; max-width: 900px; }
+    button { margin: 2px 4px 2px 0; }
+    #log { white-space: pre-wrap; font: 12px ui-monospace, monospace; background: #f4f4f4; padding: 8px; height: 420px; overflow: auto; }
+    .agent { color: #b00; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>Sidekik voice spike (DESIGN §6 ticket 7)</h1>
+  <p>
+    Agent:
+    <select id="agent"><option value="interviewer">Interviewer (capture)</option><option value="debrief">Interviewer (debrief)</option><option value="tutor">Tutor</option></select>
+    <button id="start">Start</button><button id="stop" disabled>Stop</button>
+    <span id="status">idle</span> · agent is <b id="mode">-</b> · agent spoke <b id="spoke">0</b>×
+  </p>
+  <p>
+    <button data-ctx="1">ctx #1 (context_id "screen")</button>
+    <button data-ctx="2">ctx #2 (same context_id)</button>
+    <button id="ask">[SIDEKIK] ASK</button>
+    <button id="timer">Start 60 s narration timer</button>
+  </p>
+  <div id="log"></div>
+  <script type="module">
+    import { Conversation } from 'https://cdn.jsdelivr.net/npm/@elevenlabs/client@1.26.0/+esm';
+
+    const $ = (id) => document.getElementById(id);
+    const t0 = performance.now();
+    let conversation, spoke = 0;
+    const log = (msg, cls) => {
+      const line = document.createElement('div');
+      if (cls) line.className = cls;
+      line.textContent = `${((performance.now() - t0) / 1000).toFixed(1).padStart(6)}s  ${msg}`;
+      $('log').append(line);
+      $('log').scrollTop = $('log').scrollHeight;
+    };
+
+    $('start').onclick = async () => {
+      const agent = $('agent').value;
+      const { token } = await (await fetch(`/token?agent=${agent}`)).json();
+      conversation = await Conversation.startSession({
+        conversationToken: token,
+        connectionType: 'webrtc',
+        dynamicVariables: {
+          session_id: 'spike', expert_name: 'Sabine', learner_name: 'Lena', workflow_name: 'Supplier invoice coding',
+          language: 'de', prior_summary: 'none', open_items: 'none',
+        },
+        onStatusChange: ({ status }) => { $('status').textContent = status; log(`status ${status}`); },
+        onModeChange: ({ mode }) => { $('mode').textContent = mode; if (mode === 'speaking') $('spoke').textContent = ++spoke; log(`mode ${mode}`, mode === 'speaking' ? 'agent' : ''); },
+        onMessage: ({ source, message }) => log(`${source}: ${message}`, source === 'ai' ? 'agent' : ''),
+        onError: (err) => log(`error ${err}`),
+      });
+      $('start').disabled = true; $('stop').disabled = false;
+    };
+    $('stop').onclick = async () => { await conversation?.endSession(); $('start').disabled = false; $('stop').disabled = true; };
+
+    const ctx = {
+      1: 'Screen: invoice #4471 from Präzisionswerk Ulm, €6,350, category equipment, cost center 4711.',
+      2: 'Screen: invoice #4471, cost center changed 4711 → 0400, asset number field empty.',
+    };
+    document.querySelectorAll('[data-ctx]').forEach((b) => (b.onclick = () => {
+      conversation?.sendContextualUpdate(ctx[b.dataset.ctx], { contextId: 'screen' });
+      log(`sent ctx #${b.dataset.ctx} (context_id screen)`);
+    }));
+    $('ask').onclick = () => {
+      conversation?.sendUserMessage('[SIDEKIK] ASK: Warum haben Sie die Kostenstelle von 4711 auf 0400 geändert?');
+      log('sent [SIDEKIK] ASK');
+    };
+    $('timer').onclick = () => {
+      const before = spoke;
+      log('narration timer started: narrate for 60 s');
+      setTimeout(() => log(`60 s done: the agent spoke ${spoke - before}× while you narrated`, 'agent'), 60_000);
+    };
+  </script>
+</body>
+</html>
